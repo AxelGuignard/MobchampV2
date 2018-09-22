@@ -13,6 +13,10 @@
 
         </canvas>
 
+        <script src="script/Cell.js"></script>
+        <script src="script/Map.js"></script>
+        <script src="script/MoChCivilisation.js"></script>
+        <script src="script/MoChColony.js"></script>
         <script src="script/gameController.js"></script>
     </body>
 </html>
