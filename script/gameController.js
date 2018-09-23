@@ -74,7 +74,7 @@ function update()
 
 function draw()
 {
-    //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // draw the map
     let cellSize = { width: map.cells[0][0].size.width, height: map.cells[0][0].size.height };
@@ -116,42 +116,8 @@ function updateGame()
 
             if(colony !== null)
             {
-                let action = Math.floor(Math.random() * 100) + 1;
-
-                if(action > 100 * colony.civilisation.preservativity) // if <, the colony doesn't take any initiative (they preserve their colony)
-                {
-                    let ennemies = null;
-
-                    if(ennemies = colony.scanSurroundings().ennemy !== []) // if there is an ennemy colony nearby
-                    {
-                        for(let ii = 0; ii < ennemies.length; ii++)
-                        {
-                            action = Math.floor(Math.random() * 100) + 1;
-
-                            let outcome = colony.calcBattleOutcome(ennemies[ii]);
-
-                            // deciding if must attack depending on how favorable is the outcome and how aggressive is the colony compared to preservative
-                            if(action < 100 * (outcome === -1 ? 0.1 : (outcome.max - outcome.min) / colony.population) * (colony.civilisation.aggressivity - colony.civilisation.preservativity))
-                            {
-                                colony.sendPop(outcome === -1 ? Math.floor(Math.random() * colony.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, ennemies[ii]);
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-
-                    }
-                }
-
-                if(colony.civilisation.density > colony.population)
-                {
-                    colony.population += colony.civilisation.growth;
-                }
-                else if(colony.population > colony.civilisation.density)
-                {
-                    colony.population -= colony.civilisation.unstability;
-                }
+                colony.makeAMove();
+                colony.grow();
             }
         }
     }

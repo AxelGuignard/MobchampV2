@@ -54,21 +54,20 @@ class MoChColony
 
     scanSurroundings()
     {
-        let surroudings = { left: null, up: null, right: null, down: null, ennemy: [] };
+        let surroudings = { empty: [], ally: [], ennemy: [] };
 
         if(map.cells[this.pos.x - 1] !== undefined)
         {
             if(map.cells[this.pos.x - 1][this.pos.y].inhabitant === null)
             {
-                surroudings.left = 0;
+                surroudings.empty.push(map.cells[this.pos.x - 1][this.pos.y]);
             }
             else if(map.cells[this.pos.x - 1][this.pos.y].inhabitant.civilisation === this.civilisation)
             {
-                surroudings.left = 1;
+                surroudings.ally.push(map.cells[this.pos.x - 1][this.pos.y].inhabitant);
             }
             else
             {
-                surroudings.left = -1;
                 surroudings.ennemy.push(map.cells[this.pos.x - 1][this.pos.y].inhabitant);
             }
         }
@@ -77,15 +76,14 @@ class MoChColony
         {
             if(map.cells[this.pos.x][this.pos.y - 1].inhabitant === null)
             {
-                surroudings.up = 0;
+                surroudings.empty.push(map.cells[this.pos.x][this.pos.y - 1]);
             }
             else if(map.cells[this.pos.x][this.pos.y - 1].inhabitant.civilisation === this.civilisation)
             {
-                surroudings.up = 1;
+                surroudings.ally.push(map.cells[this.pos.x][this.pos.y - 1].inhabitant);
             }
             else
             {
-                surroudings.up = -1;
                 surroudings.ennemy.push(map.cells[this.pos.x][this.pos.y - 1].inhabitant);
             }
         }
@@ -94,15 +92,14 @@ class MoChColony
         {
             if(map.cells[this.pos.x + 1][this.pos.y].inhabitant === null)
             {
-                surroudings.right = 0;
+                surroudings.empty.push(map.cells[this.pos.x + 1][this.pos.y]);
             }
             else if(map.cells[this.pos.x + 1][this.pos.y].inhabitant.civilisation === this.civilisation)
             {
-                surroudings.right = 1;
+                surroudings.ally.push(map.cells[this.pos.x + 1][this.pos.y].inhabitant);
             }
             else
             {
-                surroudings.right = -1;
                 surroudings.ennemy.push(map.cells[this.pos.x + 1][this.pos.y].inhabitant);
             }
         }
@@ -111,15 +108,14 @@ class MoChColony
         {
             if(map.cells[this.pos.x][this.pos.y + 1].inhabitant === null)
             {
-                surroudings.down = 0;
+                surroudings.empty.push(map.cells[this.pos.x][this.pos.y + 1]);
             }
             else if(map.cells[this.pos.x][this.pos.y + 1].inhabitant.civilisation === this.civilisation)
             {
-                surroudings.down = 1;
+                surroudings.ally.push(map.cells[this.pos.x][this.pos.y + 1].inhabitant);
             }
             else
             {
-                surroudings.down = -1;
                 surroudings.ennemy.push(map.cells[this.pos.x][this.pos.y + 1].inhabitant);
             }
         }
@@ -144,5 +140,63 @@ class MoChColony
         }
 
         return outcome;
+    }
+
+    makeAMove()
+    {
+        let action = Math.floor(Math.random() * 100) + 1;
+
+        if(action > 100 * this.civilisation.preservativity) // if <, the colony doesn't take any initiative (they preserve their colony)
+        {
+            let surroundings = this.scanSurroundings();
+            let empties = surroundings.empty;
+            let allies = surroundings.ally;
+            let ennemies = surroundings.ennemy;
+
+            if(ennemies !== []) // if there is an ennemy colony nearby
+            {
+                for(let i = 0; i < ennemies.length; i++)
+                {
+                    action = Math.floor(Math.random() * 100) + 1;
+
+                    let outcome = this.calcBattleOutcome(ennemies[i]);
+
+                    // deciding if must attack depending on how favorable is the outcome and how aggressive is the colony compared to preservative
+                    if(action < 100 * (outcome === -1 ? 0.1 : (outcome.max - outcome.min) / this.population) * (this.civilisation.aggressivity - this.civilisation.preservativity))
+                    {
+                        this.sendPop(outcome === -1 ? Math.floor(Math.random() * this.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, ennemies[i]);
+                        return;
+                    }
+                }
+            }
+
+            if(allies !== []) // if there is an allied colony nearby
+            {
+                for(let i = 0; i < allies.length; i++)
+                {
+                    action = Math.floor(Math.random() * 100) + 1;
+
+                    if (action < 100 * (1 - allies[i].population / this.civilisation.density) * (this.civilisation.solidarity - this.civilisation.expensivity))
+
+                        return;
+                }
+            }
+
+            // if all cells are empty or the colony rejected the other decisions
+            action = Math.floor(Math.random() * 100) + 1;
+
+        }
+    }
+
+    grow()
+    {
+        if(this.civilisation.density > this.population)
+        {
+            this.population += this.civilisation.growth;
+        }
+        else if(this.population > this.civilisation.density)
+        {
+            this.population -= this.civilisation.unstability;
+        }
     }
 }

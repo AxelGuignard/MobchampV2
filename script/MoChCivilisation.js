@@ -13,6 +13,7 @@ class MoChCivilisation
 
         // Secondary behavior
         this.aggressivity = this.combativity * 2;
+        this.solidarity = this.preservativity * 2;
 
         // Characteristics
         this.damage = Math.floor(this.combativity * 4 + 1);
