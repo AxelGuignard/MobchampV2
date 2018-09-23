@@ -5,6 +5,7 @@ let canvas = document.getElementById("field");
 let ctx = canvas.getContext("2d");
 
 let civilisations = [];
+let colonies = [];
 
 $(document).ready(function()
 {
@@ -24,8 +25,27 @@ function init()
 
     // create the civilisations
     civilisations.push(new MoChCivilisation("The blues", "#2a14e1"));
+    colonies.push([]);
     civilisations.push(new MoChCivilisation("The reds", "#e11a14"));
+    colonies.push([]);
     civilisations.push(new MoChCivilisation("The greens", "#01e11c"));
+    colonies.push([]);
+
+    let pos = { x: null, y: null };
+    let x = Math.floor(Math.random() * map.cellSize.width) + 1;
+    let y = Math.floor(Math.random() * map.cellSize.height) + 1;
+    for(let i = 0; i < civilisations.length; i++)
+    {
+        while(x === pos.x && y === pos.y)
+        {
+            x = Math.floor(Math.random() * map.cellSize.width) + 1;
+            y = Math.floor(Math.random() * map.cellSize.height) + 1;
+        }
+
+        pos.x = x;
+        pos.y = y;
+        colonies[i].push(new MoChColony(pos, civilisations[i]));
+    }
 
     let update_id = setInterval(update, 20);
     draw();
@@ -53,7 +73,7 @@ function update()
 
 function draw()
 {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // draw the map
     let cellSize = { width: map.cells[0][0].size.width, height: map.cells[0][0].size.height };
@@ -66,6 +86,19 @@ function draw()
     {
         ctx.moveTo(0, i * cellSize.height);
         ctx.lineTo(map.size.width, i * cellSize.height);
+    }
+
+    // draw the colonies
+    for(let i = 0; i < map.cellSize.height; i++)
+    {
+        for(let j = 0; j < map.cellSize.width; j++)
+        {
+            if(map.cells[j][i].inhabitant !== null)
+            {
+                ctx.fillStyle = map.cells[j][i].inhabitant.civilisation.color;
+                ctx.fillRect(j * cellSize.width, i * cellSize.height, j * cellSize.width + cellSize.width, i * cellSize.height + cellSize.height);
+            }
+        }
     }
 
     ctx.stroke();
@@ -85,7 +118,7 @@ function updateGame()
 
                 if(action > 100 * colony.civilisation.preservativity) // if <, the colony doesn't take any initiative (they preserve their colony)
                 {
-                    let ennemies = null
+                    let ennemies = null;
 
                     if(ennemies = colony.scanSurroundings().ennemy !== []) // if there is an ennemy colony nearby
                     {
@@ -98,7 +131,7 @@ function updateGame()
                             // deciding if must attack depending on how favorable is the outcome and how aggressive is the colony compared to preservative
                             if(action < 100 * (outcome === -1 ? 0.1 : (outcome.max - outcome.min) / colony.population) * (colony.civilisation.aggressivity - colony.civilisation.preservativity))
                             {
-                                colony.attack(outcome === -1 ? Math.floor(Math.random() * colony.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, ennemies[ii]);
+                                colony.sendPop(outcome === -1 ? Math.floor(Math.random() * colony.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, ennemies[ii]);
                                 break;
                             }
                         }
@@ -107,6 +140,15 @@ function updateGame()
                     {
 
                     }
+                }
+
+                if(colony.civilisation.density > colony.population)
+                {
+                    colony.population += colony.civilisation.growth;
+                }
+                else if(colony.population > colony.civilisation.density)
+                {
+                    colony.population -= colony.civilisation.unstability;
                 }
             }
         }

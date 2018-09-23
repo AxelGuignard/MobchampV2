@@ -20,5 +20,6 @@ class MoChCivilisation
         this.growth = Math.floor(this.expensivity * 4 + 1);
         this.infectionativity = 1 - (this.expensivity * 0.4 + 0.5);
         this.density = Math.floor(this.preservativity * 50 + 100);
+        this.unstability = Math.floor((1 - this.preservativity * (-5)));
     }
 }

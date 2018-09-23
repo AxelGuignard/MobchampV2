@@ -43,7 +43,7 @@ class MoChColony
             else
             {
                 cell.inhabitant.population = Math.abs(survivor);
-                cell.inhabitant.civilisation = this.civilisation;
+                cell.changeInhabitant(this.civilisation);
             }
         }
         else

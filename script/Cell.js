@@ -10,7 +10,7 @@ class Cell
 
     changeInhabitant(inhabitant)
     {
-        this.inhabitant = inhabitant;
+        this.inhabitant.civilisation = inhabitant.civilisation;
     }
 
     resize(size)
