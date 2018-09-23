@@ -56,15 +56,15 @@ class MoChColony
     {
         let surroudings = { left: null, up: null, right: null, down: null, ennemy: [] };
 
-        if(map.cells[this.pos.x - 1][this.pos.y] !== undefined)
+        if(map.cells[this.pos.x - 1] !== undefined)
         {
-            if(map.cells[this.pos.x - 1][this.pos.y].inhabitant.civilisation === this.civilisation)
-            {
-                surroudings.left = 1;
-            }
-            else if(map.cells[this.pos.x - 1][this.pos.y].inhabitant.civilisation === null)
+            if(map.cells[this.pos.x - 1][this.pos.y].inhabitant === null)
             {
                 surroudings.left = 0;
+            }
+            else if(map.cells[this.pos.x - 1][this.pos.y].inhabitant.civilisation === this.civilisation)
+            {
+                surroudings.left = 1;
             }
             else
             {
@@ -75,13 +75,13 @@ class MoChColony
 
         if(map.cells[this.pos.x][this.pos.y - 1] !== undefined)
         {
-            if(map.cells[this.pos.x][this.pos.y - 1].inhabitant.civilisation === this.civilisation)
-            {
-                surroudings.up = 1;
-            }
-            else if(map.cells[this.pos.x][this.pos.y - 1].inhabitant.civilisation === null)
+            if(map.cells[this.pos.x][this.pos.y - 1].inhabitant === null)
             {
                 surroudings.up = 0;
+            }
+            else if(map.cells[this.pos.x][this.pos.y - 1].inhabitant.civilisation === this.civilisation)
+            {
+                surroudings.up = 1;
             }
             else
             {
@@ -90,15 +90,15 @@ class MoChColony
             }
         }
 
-        if(map.cells[this.pos.x + 1][this.pos.y] !== undefined)
+        if(map.cells[this.pos.x + 1] !== undefined)
         {
-            if(map.cells[this.pos.x + 1][this.pos.y].inhabitant.civilisation === this.civilisation)
-            {
-                surroudings.right = 1;
-            }
-            else if(map.cells[this.pos.x + 1][this.pos.y].inhabitant.civilisation === null)
+            if(map.cells[this.pos.x + 1][this.pos.y].inhabitant === null)
             {
                 surroudings.right = 0;
+            }
+            else if(map.cells[this.pos.x + 1][this.pos.y].inhabitant.civilisation === this.civilisation)
+            {
+                surroudings.right = 1;
             }
             else
             {
@@ -109,13 +109,13 @@ class MoChColony
 
         if(map.cells[this.pos.x][this.pos.y + 1] !== undefined)
         {
-            if(map.cells[this.pos.x][this.pos.y + 1].inhabitant.civilisation === this.civilisation)
-            {
-                surroudings.down = 1;
-            }
-            else if(map.cells[this.pos.x][this.pos.y + 1].inhabitant.civilisation === null)
+            if(map.cells[this.pos.x][this.pos.y + 1].inhabitant === null)
             {
                 surroudings.down = 0;
+            }
+            else if(map.cells[this.pos.x][this.pos.y + 1].inhabitant.civilisation === this.civilisation)
+            {
+                surroudings.down = 1;
             }
             else
             {

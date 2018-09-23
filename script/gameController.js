@@ -24,27 +24,28 @@ function init()
     map.resize(viewport);
 
     // create the civilisations
-    civilisations.push(new MoChCivilisation("The blues", "#2a14e1"));
+    civilisations.push(new MoChCivilisation("The blues", { red: 42, green: 20, blue: 225, alpha: 1}));
     colonies.push([]);
-    civilisations.push(new MoChCivilisation("The reds", "#e11a14"));
+    civilisations.push(new MoChCivilisation("The reds", { red: 225, green: 26, blue: 20, alpha: 1}));
     colonies.push([]);
-    civilisations.push(new MoChCivilisation("The greens", "#01e11c"));
+    civilisations.push(new MoChCivilisation("The greens", { red: 1, green: 225, blue: 28, alpha: 1}));
     colonies.push([]);
 
     let pos = { x: null, y: null };
-    let x = Math.floor(Math.random() * map.cellSize.width) + 1;
-    let y = Math.floor(Math.random() * map.cellSize.height) + 1;
+    let x = Math.floor(Math.random() * map.cellSize.width);
+    let y = Math.floor(Math.random() * map.cellSize.height);
     for(let i = 0; i < civilisations.length; i++)
     {
         while(x === pos.x && y === pos.y)
         {
-            x = Math.floor(Math.random() * map.cellSize.width) + 1;
-            y = Math.floor(Math.random() * map.cellSize.height) + 1;
+            x = Math.floor(Math.random() * map.cellSize.width);
+            y = Math.floor(Math.random() * map.cellSize.height);
         }
 
         pos.x = x;
         pos.y = y;
         colonies[i].push(new MoChColony(pos, civilisations[i]));
+        map.cells[pos.x][pos.y].changeInhabitant(colonies[i][0]);
     }
 
     let update_id = setInterval(update, 20);
@@ -87,6 +88,7 @@ function draw()
         ctx.moveTo(0, i * cellSize.height);
         ctx.lineTo(map.size.width, i * cellSize.height);
     }
+    ctx.stroke();
 
     // draw the colonies
     for(let i = 0; i < map.cellSize.height; i++)
@@ -95,13 +97,13 @@ function draw()
         {
             if(map.cells[j][i].inhabitant !== null)
             {
-                ctx.fillStyle = map.cells[j][i].inhabitant.civilisation.color;
-                ctx.fillRect(j * cellSize.width, i * cellSize.height, j * cellSize.width + cellSize.width, i * cellSize.height + cellSize.height);
+                let color = map.cells[j][i].inhabitant.civilisation.color;
+                color.alpha = 1 * map.cells[j][i].inhabitant.population / map.cells[j][i].inhabitant.civilisation.density;
+                ctx.fillStyle = "rgba(" + color.red + ", " + color.green + ", " + color.blue + ", " + color.alpha + ")";
+                ctx.fillRect(j * cellSize.width, i * cellSize.height, cellSize.width, cellSize.height);
             }
         }
     }
-
-    ctx.stroke();
 }
 
 function updateGame()
