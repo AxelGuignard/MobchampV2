@@ -49,6 +49,7 @@ function init()
     }
 
     let update_id = setInterval(update, 20);
+    drawMap();
     draw();
 }
 
@@ -72,10 +73,8 @@ function update()
     draw();
 }
 
-function draw()
+function drawMap()
 {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
     // draw the map
     let cellSize = { width: map.cells[0][0].size.width, height: map.cells[0][0].size.height };
     for(let i = 0; i < map.cellSize.width; i++)
@@ -89,7 +88,10 @@ function draw()
         ctx.lineTo(map.size.width, i * cellSize.height);
     }
     ctx.stroke();
+}
 
+function draw()
+{
     // draw the colonies
     for(let i = 0; i < map.cellSize.height; i++)
     {
@@ -97,6 +99,9 @@ function draw()
         {
             if(map.cells[j][i].inhabitant !== null)
             {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                let cellSize = map.cells[0][0].size;
+
                 let color = map.cells[j][i].inhabitant.civilisation.color;
                 color.alpha = 1 * map.cells[j][i].inhabitant.population / map.cells[j][i].inhabitant.civilisation.density;
                 ctx.fillStyle = "rgba(" + color.red + ", " + color.green + ", " + color.blue + ", " + color.alpha + ")";

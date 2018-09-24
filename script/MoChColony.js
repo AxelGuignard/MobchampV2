@@ -164,7 +164,7 @@ class MoChColony
                     // deciding if must attack depending on how favorable is the outcome and how aggressive is the colony compared to preservative
                     if(action < 100 * (outcome === -1 ? 0.1 : (outcome.max - outcome.min) / this.population) * (this.civilisation.aggressivity - this.civilisation.preservativity))
                     {
-                        this.sendPop(outcome === -1 ? Math.floor(Math.random() * this.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, ennemies[i]);
+                        this.sendPop(outcome === -1 ? Math.floor(Math.random() * this.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, map.cells[ennemies[i].pos.x][ennemies[i].pos.y]);
                         return;
                     }
                 }
@@ -177,14 +177,23 @@ class MoChColony
                     action = Math.floor(Math.random() * 100) + 1;
 
                     if (action < 100 * (1 - allies[i].population / this.civilisation.density) * (this.civilisation.solidarity - this.civilisation.expensivity))
-
+                    {
+                        this.sendPop(Math.floor(Math.random() * (allies[i].population / this.civilisation.density - this.civilisation.density - allies[i].population) + (this.civilisation.density - allies[i].population)), map.cells[allies[i].pos.x][allies[i].pos.y]);
                         return;
+                    }
                 }
             }
 
             // if all cells are empty or the colony rejected the other decisions
-            action = Math.floor(Math.random() * 100) + 1;
+            for(let i = 0; i < empties.length; i++)
+            {
+                action = Math.floor(Math.random() * 100) + 1;
 
+                if(action <= (i === empties.length - 1 ? 100 : 50))
+                {
+                    this.sendPop(Math.floor(Math.random() * ((this.population - 1) - this.civilisation.infectionativity)) + this.civilisation.infectionativity, empties[i]);
+                }
+            }
         }
     }
 
