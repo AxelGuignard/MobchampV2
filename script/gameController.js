@@ -7,9 +7,18 @@ let ctx = canvas.getContext("2d");
 let civilisations = [];
 let colonies = [];
 
+let actionStack = [];
+actionStack["attack"] = [];
+actionStack["reinforce"] = [];
+actionStack["infect"] = [];
+
 $(document).ready(function()
 {
     init();
+    $("body").on("click", function ()
+    {
+        update();
+    });
 });
 
 function init()
@@ -41,14 +50,14 @@ function init()
             x = Math.floor(Math.random() * map.cellSize.width);
             y = Math.floor(Math.random() * map.cellSize.height);
         }
-
         pos.x = x;
         pos.y = y;
-        colonies[i].push(new MoChColony(pos, civilisations[i]));
-        map.cells[pos.x][pos.y].changeInhabitant(colonies[i][0]);
+
+        colonies[i].push(new MoChColony({ x: x, y: y }, civilisations[i]));
+        map.cells[x][y].changeInhabitant(colonies[i][0]);
     }
 
-    let update_id = setInterval(update, 20);
+    let update_id = setInterval(update, 100);
     drawMap();
     draw();
 }
@@ -99,13 +108,15 @@ function draw()
         {
             if(map.cells[j][i].inhabitant !== null)
             {
-                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 let cellSize = map.cells[0][0].size;
+                ctx.clearRect(j * cellSize.width, i * cellSize.height, cellSize.width, cellSize.height);
 
                 let color = map.cells[j][i].inhabitant.civilisation.color;
-                color.alpha = 1 * map.cells[j][i].inhabitant.population / map.cells[j][i].inhabitant.civilisation.density;
+                color.alpha = map.cells[j][i].inhabitant.population / map.cells[j][i].inhabitant.civilisation.density;
                 ctx.fillStyle = "rgba(" + color.red + ", " + color.green + ", " + color.blue + ", " + color.alpha + ")";
                 ctx.fillRect(j * cellSize.width, i * cellSize.height, cellSize.width, cellSize.height);
+                ctx.fillStyle = "black";
+                ctx.fillText(map.cells[j][i].inhabitant.population, j * cellSize.width + cellSize.width / 2, i * cellSize.height + cellSize.height/2);
             }
         }
     }
@@ -113,6 +124,10 @@ function draw()
 
 function updateGame()
 {
+    actionStack["attack"] = [];
+    actionStack["reinforce"] = [];
+    actionStack["infect"] = [];
+
     for(let i = 0; i < map.cellSize.height; i++)
     {
         for(let j = 0; j < map.cellSize.width; j++)
@@ -125,5 +140,25 @@ function updateGame()
                 colony.grow();
             }
         }
+    }
+
+    console.log(actionStack);
+
+    for(let i = 0; i < actionStack["attack"].length; i++)
+    {
+        let action = actionStack["attack"][i];
+        action.attacker.sendPop(action.quantity, map.cells[action.defender.pos.x][action.defender.pos.y]);
+    }
+
+    for(let i = 0; i < actionStack["reinforce"].length; i++)
+    {
+        let action = actionStack["reinforce"][i];
+        action.sender.sendPop(action.quantity, map.cells[action.receiver.pos.x][action.receiver.pos.y]);
+    }
+
+    for(let i = 0; i < actionStack["infect"].length; i++)
+    {
+        let action = actionStack["infect"][i];
+        action.sender.sendPop(action.quantity, action.location);
     }
 }

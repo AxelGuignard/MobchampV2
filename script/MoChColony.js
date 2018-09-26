@@ -13,13 +13,24 @@ class MoChColony
         {
             this.population -= quantity;
 
-            if(cell.inhabitant.civilisation === this.civilisation)
+            if(cell.inhabitant !== null)
             {
-                cell.inhabitant.population += quantity;
+                if (cell.inhabitant.civilisation === this.civilisation)
+                {
+                    cell.inhabitant.population += quantity;
+                }
+                else
+                {
+                    this.attack(quantity, cell);
+                }
             }
             else
             {
-                this.attack(quantity, cell);
+                if(quantity > 0)
+                {
+                    cell.changeInhabitant(this);
+                    cell.inhabitant.population = quantity;
+                }
             }
         }
         else
@@ -40,10 +51,14 @@ class MoChColony
             {
                 cell.inhabitant.population = survivor;
             }
+            else if(survivor < 0)
+            {
+                cell.changeInhabitant(this);
+                cell.inhabitant.population = Math.abs(survivor);
+            }
             else
             {
-                cell.inhabitant.population = Math.abs(survivor);
-                cell.changeInhabitant(this.civilisation);
+                cell.changeInhabitant(null);
             }
         }
         else
@@ -127,19 +142,8 @@ class MoChColony
     {
         let allyForces = (this.population - 1) * this.civilisation.damage;
         let ennemyForces = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
-        let outcome = 0;
 
-        if(ennemyForces - allyForces < 0)
-        {
-            let minForces = ennemyForces + 1;
-            outcome = { min: minForces, max: this.population - 1 };
-        }
-        else
-        {
-            outcome = -1;
-        }
-
-        return outcome;
+        return ennemyForces - allyForces < 0;
     }
 
     makeAMove()
@@ -151,26 +155,26 @@ class MoChColony
             let surroundings = this.scanSurroundings();
             let empties = surroundings.empty;
             let allies = surroundings.ally;
-            let ennemies = surroundings.ennemy;
+            let enemies = surroundings.ennemy;
 
-            if(ennemies !== []) // if there is an ennemy colony nearby
+            if(enemies.length > 0) // if there is an ennemy colony nearby
             {
-                for(let i = 0; i < ennemies.length; i++)
+                for(let i = 0; i < enemies.length; i++)
                 {
                     action = Math.floor(Math.random() * 100) + 1;
 
-                    let outcome = this.calcBattleOutcome(ennemies[i]);
+                    let outcome = this.calcBattleOutcome(map.cells[enemies[i].pos.x][enemies[i].pos.y]);
 
                     // deciding if must attack depending on how favorable is the outcome and how aggressive is the colony compared to preservative
-                    if(action < 100 * (outcome === -1 ? 0.1 : (outcome.max - outcome.min) / this.population) * (this.civilisation.aggressivity - this.civilisation.preservativity))
+                    if(action < 100 * (outcome ? 0.1 : ((this.population - 1) - (enemies[i].population + 1)) / this.population) * (this.civilisation.aggressivity - this.civilisation.preservativity))
                     {
-                        this.sendPop(outcome === -1 ? Math.floor(Math.random() * this.population) + 1 : Math.floor(Math.random() * (outcome.max + 1)) + outcome.min, map.cells[ennemies[i].pos.x][ennemies[i].pos.y]);
+                        actionStack["attack"].push({ attacker: this, defender: enemies[i], quantity: outcome === -1 ? Math.round(Math.random() * (this.population - 2)) + 1 : Math.round(Math.random() * (this.population - 1) - (enemies[i].population + 1) + enemies[i].population + 1) });
                         return;
                     }
                 }
             }
 
-            if(allies !== []) // if there is an allied colony nearby
+            if(allies.length > 0) // if there is an allied colony nearby
             {
                 for(let i = 0; i < allies.length; i++)
                 {
@@ -178,7 +182,7 @@ class MoChColony
 
                     if (action < 100 * (1 - allies[i].population / this.civilisation.density) * (this.civilisation.solidarity - this.civilisation.expensivity))
                     {
-                        this.sendPop(Math.floor(Math.random() * (allies[i].population / this.civilisation.density - this.civilisation.density - allies[i].population) + (this.civilisation.density - allies[i].population)), map.cells[allies[i].pos.x][allies[i].pos.y]);
+                        actionStack["reinforce"].push({ sender: this, receiver: allies[i], quantity: Math.round(Math.random() * (this.population - 2) + 1) });
                         return;
                     }
                 }
@@ -191,7 +195,7 @@ class MoChColony
 
                 if(action <= (i === empties.length - 1 ? 100 : 50))
                 {
-                    this.sendPop(Math.floor(Math.random() * ((this.population - 1) - this.civilisation.infectionativity)) + this.civilisation.infectionativity, empties[i]);
+                    actionStack["infect"].push({ sender: this, location: empties[i], quantity: Math.round(Math.random() * (this.population - this.population * this.civilisation.infectionativity - 1) + this.population * this.civilisation.infectionativity) })
                 }
             }
         }

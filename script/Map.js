@@ -16,7 +16,7 @@ class Map
             cells.push([]);
             for(let j = 0; j < this.cellSize.width; j++)
             {
-                cells[i].push(new Cell(j, i));
+                cells[i].push(new Cell(i, j));
             }
         }
 
