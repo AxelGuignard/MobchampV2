@@ -5,3 +5,23 @@ html, body
     margin: 0;
     overflow: hidden;
 }
+
+td
+{
+    width: 50%;
+}
+
+.d_civ
+{
+    padding: 10px;
+}
+
+#viewport
+{
+    float: left;
+}
+
+#display
+{
+    float: right;
+}

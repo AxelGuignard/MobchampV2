@@ -10,7 +10,14 @@ class Cell
 
     changeInhabitant(inhabitant)
     {
-        this.inhabitant = new MoChColony({ x: this.posX, y: this.posY }, inhabitant.civilisation);
+        if(inhabitant !== null)
+        {
+            this.inhabitant = new MoChColony({ x: this.posX, y: this.posY }, inhabitant.civilisation);
+        }
+        else
+        {
+            this.inhabitant = null;
+        }
     }
 
     resize(size)

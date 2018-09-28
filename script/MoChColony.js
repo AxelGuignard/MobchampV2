@@ -18,10 +18,11 @@ class MoChColony
                 if (cell.inhabitant.civilisation === this.civilisation)
                 {
                     cell.inhabitant.population += quantity;
+                    return cell.inhabitant.population - this.civilisation.density;
                 }
                 else
                 {
-                    this.attack(quantity, cell);
+                    return this.attack(quantity, cell);
                 }
             }
             else
@@ -30,6 +31,11 @@ class MoChColony
                 {
                     cell.changeInhabitant(this);
                     cell.inhabitant.population = quantity;
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
         }
@@ -46,19 +52,25 @@ class MoChColony
             let attacker = quantity * this.civilisation.damage;
             let defender = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
             let survivor = defender - attacker;
+            let result = 0;
 
             if(survivor > 0)
             {
+                result = cell.inhabitant.population - survivor; // nbr of population lost by defender
                 cell.inhabitant.population = survivor;
+                return result * -1;
             }
             else if(survivor < 0)
             {
                 cell.changeInhabitant(this);
                 cell.inhabitant.population = Math.abs(survivor);
+                return quantity - Math.abs(survivor);
             }
             else
             {
+                result = cell.inhabitant.population;
                 cell.changeInhabitant(null);
+                return result * -1; // nbr of population lost by defender (all of it)
             }
         }
         else

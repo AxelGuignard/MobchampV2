@@ -1,11 +1,12 @@
 let viewport = {width: $(document).width(), height: $(document).height() };
 let map = null;
 
-let canvas = document.getElementById("field");
+let canvas = document.getElementById("viewport");
 let ctx = canvas.getContext("2d");
 
 let civilisations = [];
 let colonies = [];
+let totalPop = 0;
 
 let actionStack = [];
 actionStack["attack"] = [];
@@ -24,13 +25,14 @@ $(document).ready(function()
 function init()
 {
     // create the canvas and webgl rendering context
-    //ctx.viewport(0, 0, $(document).width(), $(document).height());
-    ctx.canvas.width = viewport.width;
+    ctx.canvas.width = viewport.width * 0.8;
     ctx.canvas.height = viewport.height;
 
+    $("#display").width(viewport.width * 0.2).height(viewport.height);
+
     // create the map and size it to viewport size
-    map = new Map(10, 10);
-    map.resize(viewport);
+    map = new Map(50, 50);
+    map.resize({ width: viewport.width * 0.8, height: viewport.height });
 
     // create the civilisations
     civilisations.push(new MoChCivilisation("The blues", { red: 42, green: 20, blue: 225, alpha: 1}));
@@ -55,6 +57,52 @@ function init()
 
         colonies[i].push(new MoChColony({ x: x, y: y }, civilisations[i]));
         map.cells[x][y].changeInhabitant(colonies[i][0]);
+
+        $("#display").append(
+            "<table id='" + civilisations[i].name + "' class='d_civ'>" +
+                "<tr>" +
+                    "<td>" +
+                        "<h2>" + civilisations[i].name + "</h2>" +
+                    "</td>" +
+                    "<td>" +
+                        "<span style='display: block; width: 30%; height: 30%; border: 2px solid black; background-color: rgba(" + civilisations[i].color.red + ", " + civilisations[i].color.green + ", " + civilisations[i].color.blue + ", 1);'" +
+                    "</td>" +
+                "</tr>" +
+                "<tr>" +
+                    "<td>" +
+                        "<span>Population:</span>" +
+                    "</td>" +
+                    "<td style='text-align: right;'>" +
+                        "<span id='" + civilisations[i].name.replace(" ", "_") + "_pop' class='d_attr'></span>" +
+                    "</td>" +
+                "</tr>" +
+                "<tr>" +
+                    "<td>" +
+                        "<span>Combativity:</span>" +
+                    "</td>" +
+                    "<td style='text-align: right;'>" +
+                        "<span id='" + civilisations[i].name.replace(" ", "_") + "_comb' class='d_attr'></span>" +
+                    "</td>" +
+                "</tr>" +
+                "<tr>" +
+                    "<td>" +
+                        "<span>Preservativity:</span>" +
+                    "</td>" +
+                    "<td style='text-align: right;'>" +
+                        "<span id='" + civilisations[i].name.replace(" ", "_") + "_pres' class='d_attr'></span>" +
+                    "</td>" +
+                "</tr>" +
+                "<tr>" +
+                    "<td>" +
+                        "<span>Expensivity:</span>" +
+                    "</td>" +
+                    "<td style='text-align: right;'>" +
+                        "<span id='" + civilisations[i].name.replace(" ", "_") + "_expen' class='d_attr'></span>" +
+                    "</td>" +
+                "</tr>" +
+            "</table>");
+
+        $(".d_civ").height(viewport.height / civilisations.length);
     }
 
     let update_id = setInterval(update, 100);
@@ -115,8 +163,8 @@ function draw()
                 color.alpha = map.cells[j][i].inhabitant.population / map.cells[j][i].inhabitant.civilisation.density;
                 ctx.fillStyle = "rgba(" + color.red + ", " + color.green + ", " + color.blue + ", " + color.alpha + ")";
                 ctx.fillRect(j * cellSize.width, i * cellSize.height, cellSize.width, cellSize.height);
-                ctx.fillStyle = "black";
-                ctx.fillText(map.cells[j][i].inhabitant.population, j * cellSize.width + cellSize.width / 2, i * cellSize.height + cellSize.height/2);
+                // ctx.fillStyle = "black";
+                // ctx.fillText(map.cells[j][i].inhabitant.population, j * cellSize.width + cellSize.width / 2, i * cellSize.height + cellSize.height/2);
             }
         }
     }
@@ -124,6 +172,11 @@ function draw()
 
 function updateGame()
 {
+    for(let i = 0; i < civilisations.length; i++)
+    {
+        civilisations[i].population = 0;
+    }
+
     actionStack["attack"] = [];
     actionStack["reinforce"] = [];
     actionStack["infect"] = [];
@@ -138,27 +191,51 @@ function updateGame()
             {
                 colony.makeAMove();
                 colony.grow();
+
+                colony.civilisation.population += colony.population;
             }
         }
     }
 
-    console.log(actionStack);
+    console.log(actionStack); // debug
 
+    let result = null;
     for(let i = 0; i < actionStack["attack"].length; i++)
     {
         let action = actionStack["attack"][i];
-        action.attacker.sendPop(action.quantity, map.cells[action.defender.pos.x][action.defender.pos.y]);
+        result = action.attacker.sendPop(action.quantity, map.cells[action.defender.pos.x][action.defender.pos.y]);
+        if(result < 0)
+        {
+            if(!action.attacker.civilisation.changeBehavior("preservativity", Math.random() * 0.005 * (Math.abs(result) / (action.defender.population - result)) + 0.005))
+            {
+                console.log("error: enable to update behavior");
+            }
+        }
     }
 
     for(let i = 0; i < actionStack["reinforce"].length; i++)
     {
         let action = actionStack["reinforce"][i];
-        action.sender.sendPop(action.quantity, map.cells[action.receiver.pos.x][action.receiver.pos.y]);
+        result = action.sender.sendPop(action.quantity, map.cells[action.receiver.pos.x][action.receiver.pos.y]);
     }
 
     for(let i = 0; i < actionStack["infect"].length; i++)
     {
         let action = actionStack["infect"][i];
-        action.sender.sendPop(action.quantity, action.location);
+        result = action.sender.sendPop(action.quantity, action.location);
+    }
+
+    totalPop = 0;
+    for(let i = 0; i < civilisations.length; i++)
+    {
+        totalPop += civilisations[i].population;
+    }
+
+    for(let i = 0; i < civilisations.length; i++)
+    {
+        $("#" + civilisations[i].name.replace(" ", "_") + "_pop").text(civilisations[i].population + "(" + (civilisations[i].population / totalPop * 100).toPrecision(4) + "%)");
+        $("#" + civilisations[i].name.replace(" ", "_") + "_comb").text((civilisations[i].combativity * 100).toPrecision(4) + "%");
+        $("#" + civilisations[i].name.replace(" ", "_") + "_pres").text((civilisations[i].preservativity * 100).toPrecision(4) + "%");
+        $("#" + civilisations[i].name.replace(" ", "_") + "_expen").text((civilisations[i].expensivity * 100).toPrecision(4) + "%");
     }
 }

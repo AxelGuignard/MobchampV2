@@ -9,9 +9,8 @@
     </head>
 
     <body>
-        <canvas id="field">
-
-        </canvas>
+        <canvas id="viewport"></canvas>
+        <div id="display"></div>
 
         <script src="script/Cell.js"></script>
         <script src="script/Map.js"></script>
