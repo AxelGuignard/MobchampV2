@@ -16,12 +16,12 @@ class MoChCivilisation
         this.solidarity = this.preservativity * 2;
 
         // Characteristics
-        this.damage = Math.floor(this.combativity * 4 + 1);
-        this.defence = Math.floor(this.preservativity * 4 + 1);
-        this.growth = Math.floor(this.expensivity * 4 + 1);
+        this.damage = Math.round(this.combativity * 4 + 1);
+        this.defence = Math.round(this.preservativity * 4 + 1);
+        this.growth = Math.round(this.expensivity * 4 + 1);
         this.infectionativity = 1 - (this.expensivity * 0.4 + 0.5);
-        this.density = Math.floor(this.preservativity * 50 + 100);
-        this.unstability = Math.floor((1 - this.preservativity * (-5)));
+        this.density = Math.round(this.preservativity * 50 + 100);
+        this.unstability = Math.round((1 - this.preservativity * (-5)));
     }
 
     changeBehavior(behavior, change)
@@ -45,6 +45,16 @@ class MoChCivilisation
                     this.combativity += change;
                     this.preservativity -= change / 2;
                     this.expensivity -= change / 2;
+                    if(this.preservativity < 0)
+                    {
+                        this.preservativity = 0;
+                        this.expensivity -= change - Math.abs(this.preservativity + change);
+                    }
+                    else if(this.expensivity < 0)
+                    {
+                        this.expensivity = 0;
+                        this.preservativity -= change - Math.abs(this.expensivity + change);
+                    }
                 }
 
                 break;
@@ -66,6 +76,16 @@ class MoChCivilisation
                     this.preservativity += change;
                     this.combativity -= change / 2;
                     this.expensivity -= change / 2;
+                    if(this.combativity < 0)
+                    {
+                        this.combativity = 0;
+                        this.expensivity -= change - Math.abs(this.combativity + change);
+                    }
+                    else if(this.expensivity < 0)
+                    {
+                        this.expensivity = 0;
+                        this.combativity -= change - Math.abs(this.expensivity + change);
+                    }
                 }
 
                 break;
@@ -87,13 +107,35 @@ class MoChCivilisation
                     this.expensivity += change;
                     this.combativity -= change / 2;
                     this.preservativity -= change / 2;
+                    if(this.combativity < 0)
+                    {
+                        this.combativity = 0;
+                        this.preservativity -= change - Math.abs(this.combativity + change);
+                    }
+                    else if(this.preservativity < 0)
+                    {
+                        this.preservativity = 0;
+                        this.combativity -= change - Math.abs(this.preservativity + change);
+                    }
                 }
 
                 break;
             default:
-                return false;
+                throw  new Error("Wrong parameter 'behavior' passed\r\nat: Civilisation '" + this.name + "'");
         }
 
+        this.updateCharacteristics();
+
         return true;
+    }
+
+    updateCharacteristics()
+    {
+        this.damage = Math.round(this.combativity * 4 + 1);
+        this.defence = Math.round(this.preservativity * 4 + 1);
+        this.growth = Math.round(this.expensivity * 4 + 1);
+        this.infectionativity = 1 - (this.expensivity * 0.4 + 0.5);
+        this.density = Math.round(this.preservativity * 50 + 100);
+        this.unstability = Math.round((1 - this.preservativity * (-5)));
     }
 }

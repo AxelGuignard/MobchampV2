@@ -31,7 +31,7 @@ function init()
     $("#display").width(viewport.width * 0.2).height(viewport.height);
 
     // create the map and size it to viewport size
-    map = new Map(50, 50);
+    map = new Map(30, 30);
     map.resize({ width: viewport.width * 0.8, height: viewport.height });
 
     // create the civilisations
@@ -163,8 +163,8 @@ function draw()
                 color.alpha = map.cells[j][i].inhabitant.population / map.cells[j][i].inhabitant.civilisation.density;
                 ctx.fillStyle = "rgba(" + color.red + ", " + color.green + ", " + color.blue + ", " + color.alpha + ")";
                 ctx.fillRect(j * cellSize.width, i * cellSize.height, cellSize.width, cellSize.height);
-                // ctx.fillStyle = "black";
-                // ctx.fillText(map.cells[j][i].inhabitant.population, j * cellSize.width + cellSize.width / 2, i * cellSize.height + cellSize.height/2);
+                ctx.fillStyle = "black";
+                ctx.fillText(map.cells[j][i].inhabitant.population, j * cellSize.width + cellSize.width / 2, i * cellSize.height + cellSize.height/2);
             }
         }
     }
@@ -189,7 +189,14 @@ function updateGame()
 
             if(colony !== null)
             {
-                colony.makeAMove();
+                try
+                {
+                    colony.makeAMove();
+                }
+                catch(e)
+                {
+                    console.log(e.message);
+                }
                 colony.grow();
 
                 colony.civilisation.population += colony.population;
@@ -203,12 +210,37 @@ function updateGame()
     for(let i = 0; i < actionStack["attack"].length; i++)
     {
         let action = actionStack["attack"][i];
-        result = action.attacker.sendPop(action.quantity, map.cells[action.defender.pos.x][action.defender.pos.y]);
+        try
+        {
+            result = action.attacker.sendPop(action.quantity, map.cells[action.defender.pos.x][action.defender.pos.y]);
+        }
+        catch(e)
+        {
+            console.log(e.message);
+        }
+
         if(result < 0)
         {
-            if(!action.attacker.civilisation.changeBehavior("preservativity", Math.random() * 0.005 * (Math.abs(result) / (action.defender.population - result)) + 0.005))
+            try
             {
-                console.log("error: enable to update behavior");
+                action.attacker.civilisation.changeBehavior("preservativity", Math.random() * 0.005 * (1 - Math.abs(result) / (action.defender.population - result)) + 0.005);
+                action.defender.civilisation.changeBehavior("combativity", Math.random() * 0.005 * (1 - Math.abs(result) / (action.defender.population - result)) + 0.005);
+            }
+            catch(e)
+            {
+                console.log(e.message);
+            }
+        }
+        else
+        {
+            try
+            {
+                action.attacker.civilisation.changeBehavior("combativity", Math.random() * 0.0025 * (1 - result / action.attacker.population + result) + 0.0025);
+                action.defender.civilisation.changeBehavior("preservativity", Math.random() * 0.0025 * (1 - result / action.attacker.population + result) + 0.0025);
+            }
+            catch(e)
+            {
+                console.log(e.message);
             }
         }
     }
@@ -216,13 +248,27 @@ function updateGame()
     for(let i = 0; i < actionStack["reinforce"].length; i++)
     {
         let action = actionStack["reinforce"][i];
-        result = action.sender.sendPop(action.quantity, map.cells[action.receiver.pos.x][action.receiver.pos.y]);
+        try
+        {
+            result = action.sender.sendPop(action.quantity, map.cells[action.receiver.pos.x][action.receiver.pos.y]);
+        }
+        catch(e)
+        {
+            console.log(e.message);
+        }
     }
 
     for(let i = 0; i < actionStack["infect"].length; i++)
     {
         let action = actionStack["infect"][i];
-        result = action.sender.sendPop(action.quantity, action.location);
+        try
+        {
+            result = action.sender.sendPop(action.quantity, action.location);
+        }
+        catch(e)
+        {
+            console.log(e.message);
+        }
     }
 
     totalPop = 0;

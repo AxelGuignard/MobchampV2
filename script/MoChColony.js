@@ -35,47 +35,62 @@ class MoChColony
                 }
                 else
                 {
-                    return false;
+                    throw new Error("Can't infect a cell by sending less than 1 population\r\nat: Colony{x: " + this.pos.x + ",y: " + this.pos.y + "}");
                 }
             }
         }
         else
         {
-            return false;
+            throw new Error("Can't send more than total population\r\nat: Colony{x: " + this.pos.x + ",y: " + this.pos.y + "}");
         }
     }
 
     attack(quantity, cell)
     {
-        if(cell.inhabitant.civilisation !== this.civilisation)
+        if(cell.inhabitant !== null)
         {
-            let attacker = quantity * this.civilisation.damage;
-            let defender = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
-            let survivor = defender - attacker;
-            let result = 0;
+            if(cell.inhabitant.civilisation !== this.civilisation)
+            {
+                let attacker = quantity * this.civilisation.damage;
+                let defender = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
+                let survivor = defender - attacker;
+                if(survivor > 0)
+                {
+                    survivor /= cell.inhabitant.civilisation.defence;
+                }
+                else
+                {
+                    survivor /= this.civilisation.damage;
+                }
+                let result = 0;
 
-            if(survivor > 0)
-            {
-                result = cell.inhabitant.population - survivor; // nbr of population lost by defender
-                cell.inhabitant.population = survivor;
-                return result * -1;
-            }
-            else if(survivor < 0)
-            {
-                cell.changeInhabitant(this);
-                cell.inhabitant.population = Math.abs(survivor);
-                return quantity - Math.abs(survivor);
+                if(survivor > 0)
+                {
+                    result = cell.inhabitant.population - survivor; // nbr of population lost by defender
+                    cell.inhabitant.population = survivor;
+                    return result * -1;
+                }
+                else if(survivor < 0)
+                {
+                    cell.changeInhabitant(this);
+                    cell.inhabitant.population = Math.abs(survivor);
+                    return quantity - Math.abs(survivor);
+                }
+                else
+                {
+                    result = cell.inhabitant.population;
+                    cell.changeInhabitant(null);
+                    return result * -1; // nbr of population lost by defender (all of it)
+                }
             }
             else
             {
-                result = cell.inhabitant.population;
-                cell.changeInhabitant(null);
-                return result * -1; // nbr of population lost by defender (all of it)
+                throw new Error("Can't attack its allies\r\nat: Colony{x: " + this.pos.x + ",y: " + this.pos.y + "}");
             }
         }
         else
         {
-            return false;
+                throw new Error("Can't attack an empty cell\r\nat: Colony{x: " + this.pos.x + ",y: " + this.pos.y + "}");
         }
     }
 
@@ -152,10 +167,24 @@ class MoChColony
 
     calcBattleOutcome(cell)
     {
-        let allyForces = (this.population - 1) * this.civilisation.damage;
-        let ennemyForces = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
+        if(cell.inhabitant !== null)
+        {
+            if(cell.inhabitant.civilisation !== this.civilisation)
+            {
+                let allyForces = (this.population - 1) * this.civilisation.damage;
+                let ennemyForces = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
 
-        return ennemyForces - allyForces < 0;
+                return ennemyForces - allyForces < 0;
+            }
+            else
+            {
+                throw new Error("Can't calculate the outcome of a battle against an ally\r\nat: Colony{x: " + this.pos.x + ",y: " + this.pos.y + "}");
+            }
+        }
+        else
+        {
+            throw new Error("Can't calculate the outcome of a battle against an empty cell\r\nat: Colony{x: " + this.pos.x + ",y: " + this.pos.y + "}");
+        }
     }
 
     makeAMove()
