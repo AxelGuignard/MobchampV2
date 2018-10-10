@@ -13,26 +13,35 @@ actionStack["attack"] = [];
 actionStack["reinforce"] = [];
 actionStack["infect"] = [];
 
+let time = 1020 - $("#speed").val();
+
+let debug = false;
+
 $(document).ready(function()
 {
     init();
-    $("body").on("click", function ()
+    if(debug)
     {
-        update();
-    });
+        $("body").on("click", function ()
+        {
+            update(); // debug
+        });
+    }
 });
 
 function init()
 {
     // create the canvas and webgl rendering context
     ctx.canvas.width = viewport.width * 0.8;
-    ctx.canvas.height = viewport.height;
+    ctx.canvas.height = viewport.height * 0.93;
 
-    $("#display").width(viewport.width * 0.2).height(viewport.height);
+    $("#display").width(viewport.width * 1 - ctx.canvas.width).height(ctx.canvas.height);
+    $("#controls").height(viewport.height * 1 - ctx.canvas.height);
+    $("#speed").width(viewport.width * 0.2);
 
     // create the map and size it to viewport size
     map = new Map(30, 30);
-    map.resize({ width: viewport.width * 0.8, height: viewport.height });
+    map.resize({ width: ctx.canvas.width, height: ctx.canvas.height });
 
     // create the civilisations
     civilisations.push(new MoChCivilisation("The blues", { red: 42, green: 20, blue: 225, alpha: 1}));
@@ -102,10 +111,15 @@ function init()
                 "</tr>" +
             "</table>");
 
-        $(".d_civ").height(viewport.height / civilisations.length);
+        $(".d_civ").height($("#display").height() / civilisations.length);
     }
 
-    let update_id = setInterval(update, 100);
+    setTimeout(update, time);
+    $("#speed").on("change", function()
+    {
+        time = 1020 - $("#speed").val();
+    });
+
     drawMap();
     draw();
 }
@@ -128,6 +142,10 @@ function update()
 
     updateGame();
     draw();
+    if(!debug)
+    {
+        setTimeout(update, time);
+    }
 }
 
 function drawMap()
