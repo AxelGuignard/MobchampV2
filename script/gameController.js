@@ -13,26 +13,35 @@ actionStack["attack"] = [];
 actionStack["reinforce"] = [];
 actionStack["infect"] = [];
 
+let time = 1020 - $("#speed").val();
+
+let debug = false;
+
 $(document).ready(function()
 {
     init();
-    $("body").on("click", function ()
+    if(debug)
     {
-        update();
-    });
+        $("body").on("click", function ()
+        {
+            update(); // debug
+        });
+    }
 });
 
 function init()
 {
     // create the canvas and webgl rendering context
     ctx.canvas.width = viewport.width * 0.8;
-    ctx.canvas.height = viewport.height;
+    ctx.canvas.height = viewport.height * 0.93;
 
-    $("#display").width(viewport.width * 0.2).height(viewport.height);
+    $("#display").width(viewport.width * 1 - ctx.canvas.width).height(ctx.canvas.height);
+    $("#controls").height(viewport.height * 1 - ctx.canvas.height);
+    $("#speed").width(viewport.width * 0.2);
 
     // create the map and size it to viewport size
-    map = new Map(30, 30);
-    map.resize({ width: viewport.width * 0.8, height: viewport.height });
+    map = new Battlefield(30, 30);
+    map.resize({ width: ctx.canvas.width, height: ctx.canvas.height });
 
     // create the civilisations
     civilisations.push(new MoChCivilisation("The blues", { red: 42, green: 20, blue: 225, alpha: 1}));
@@ -40,6 +49,8 @@ function init()
     civilisations.push(new MoChCivilisation("The reds", { red: 225, green: 26, blue: 20, alpha: 1}));
     colonies.push([]);
     civilisations.push(new MoChCivilisation("The greens", { red: 1, green: 225, blue: 28, alpha: 1}));
+    colonies.push([]);
+    civilisations.push(new MoChCivilisation("The yellows", { red: 247, green: 199, blue: 35, alpha: 1}));
     colonies.push([]);
 
     let pos = { x: null, y: null };
@@ -102,10 +113,15 @@ function init()
                 "</tr>" +
             "</table>");
 
-        $(".d_civ").height(viewport.height / civilisations.length);
+        $(".d_civ").height($("#display").height() / civilisations.length);
     }
 
-    let update_id = setInterval(update, 100);
+    setTimeout(update, time);
+    $("#speed").on("change", function()
+    {
+        time = 1020 - $("#speed").val();
+    });
+
     drawMap();
     draw();
 }
@@ -128,6 +144,10 @@ function update()
 
     updateGame();
     draw();
+    if(!debug)
+    {
+        setTimeout(update, time);
+    }
 }
 
 function drawMap()
@@ -175,6 +195,7 @@ function updateGame()
     for(let i = 0; i < civilisations.length; i++)
     {
         civilisations[i].population = 0;
+        civilisations[i].potential = { empty: 0, occupied: 0, owned: 0 };
     }
 
     actionStack["attack"] = [];
@@ -277,6 +298,44 @@ function updateGame()
         totalPop += civilisations[i].population;
     }
 
+    for(let i = 0; i < map.cellSize.height; i++)
+    {
+        for(let j = 0; j < map.cellSize.width; j++)
+        {
+            let colony = map.cells[j][i].inhabitant;
+
+            if(colony !== null)
+            {
+                for(let k = 0; k < civilisations.length; k++)
+                {
+                    if(colony.civilisation !== civilisations[k])
+                    {
+                        civilisations[k].potential.occupied++;
+                    }
+                    else
+                    {
+                        civilisations[k].potential.owned++;
+                    }
+                }
+            }
+            else
+            {
+                for(let k = 0; k < civilisations.length; k++)
+                {
+                    civilisations[k].potential.empty++;
+                }
+            }
+        }
+    }
+
+    for(let i = 0; i < civilisations.length; i++)
+    {
+        civilisations[i].changeBehavior("expensivity", (civilisations[i].potential.empty / (map.cellSize.height * map.cellSize.width)) * 0.01);
+        civilisations[i].changeBehavior("combativity", (civilisations[i].potential.occupied / (map.cellSize.height * map.cellSize.width)) * 0.01);
+        civilisations[i].changeBehavior("preservativity", (civilisations[i].potential.owned / (map.cellSize.height * map.cellSize.width)) * 0.005);
+    }
+
+    // display civilisations informations
     for(let i = 0; i < civilisations.length; i++)
     {
         $("#" + civilisations[i].name.replace(" ", "_") + "_pop").text(civilisations[i].population + "(" + (civilisations[i].population / totalPop * 100).toPrecision(4) + "%)");

@@ -3,6 +3,7 @@ class MoChCivilisation
     constructor(name, color)
     {
         this.population = 0;
+        this.potential = { empty: 0, occupied: 0, owned: 0 };
         this.color = color;
         this.name = name;
 

@@ -1,4 +1,4 @@
-class Map
+class Battlefield
 {
     constructor(cellSizeX, cellSizeY)
     {

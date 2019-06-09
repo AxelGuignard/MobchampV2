@@ -11,9 +11,15 @@
     <body>
         <canvas id="viewport"></canvas>
         <div id="display"></div>
+        <div id="controls">
+            <div id="speed_grp">
+                <label for="speed">Speed</label>
+                <input type="range" id="speed" name="speed" min="20" max="1000" step="20" value="500"/>
+            </div>
+        </div>
 
         <script src="script/Cell.js"></script>
-        <script src="script/Map.js"></script>
+        <script src="script/Battlefield.js"></script>
         <script src="script/MoChCivilisation.js"></script>
         <script src="script/MoChColony.js"></script>
         <script src="script/gameController.js"></script>

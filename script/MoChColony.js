@@ -51,16 +51,17 @@ class MoChColony
         {
             if(cell.inhabitant.civilisation !== this.civilisation)
             {
-                let attacker = quantity * this.civilisation.damage;
-                let defender = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
-                let survivor = defender - attacker;
-                if(survivor > 0)
+                let attackPower = quantity * this.civilisation.damage;
+                let defencePower = cell.inhabitant.population * cell.inhabitant.civilisation.defence;
+                let remainingPower = defencePower - attackPower;
+                let survivor;
+                if(remainingPower > 0)
                 {
-                    survivor /= cell.inhabitant.civilisation.defence;
+                    survivor = Math.round(remainingPower / cell.inhabitant.civilisation.defence);
                 }
                 else
                 {
-                    survivor /= this.civilisation.damage;
+                    survivor = Math.round(remainingPower / this.civilisation.damage);
                 }
                 let result = 0;
 
@@ -221,9 +222,9 @@ class MoChColony
                 {
                     action = Math.floor(Math.random() * 100) + 1;
 
-                    if (action < 100 * (1 - allies[i].population / this.civilisation.density) * (this.civilisation.solidarity - this.civilisation.expensivity))
+                    if (action < 100 * ((this.population / this.civilisation.density) - (allies[i].population / this.civilisation.density)) > 0 ? ((this.population / this.civilisation.density) - (allies[i].population / this.civilisation.density)) * (this.civilisation.solidarity - this.civilisation.expensivity) : 0)
                     {
-                        actionStack["reinforce"].push({ sender: this, receiver: allies[i], quantity: Math.round(Math.random() * (this.population - 2) + 1) });
+                        actionStack["reinforce"].push({ sender: this, receiver: allies[i], quantity: Math.round(Math.random() * (this.population - allies[i].population - 1) + 1) });
                         return;
                     }
                 }
@@ -236,7 +237,11 @@ class MoChColony
 
                 if(action <= (i === empties.length - 1 ? 100 : 50))
                 {
-                    actionStack["infect"].push({ sender: this, location: empties[i], quantity: Math.round(Math.random() * (this.population - this.population * this.civilisation.infectionativity - 1) + this.population * this.civilisation.infectionativity) })
+                    if(this.population > this.civilisation.density * this.civilisation.infectionativity)
+                    {
+                        actionStack["infect"].push({ sender: this, location: empties[i], quantity: Math.round(Math.random() * (this.population - (this.civilisation.density * this.civilisation.infectionativity) - 1) + (this.civilisation.density * this.civilisation.infectionativity)) });
+                        return;
+                    }
                 }
             }
         }
