@@ -34,27 +34,16 @@ class MoChCivilisation
                     this.preservativity = 0;
                     this.expensivity = 0;
                 }
-                else if(this.combativity + change < 0)
-                {
-                    this.combativity = 0;
-                    this.preservativity += (change - Math.abs(this.combativity + change)) / 2;
-                    this.expensivity += (change - Math.abs(this.combativity + change)) / 2;
-                }
                 else
                 {
+                    if(this.combativity + change < 0)
+                    {
+                        change = this.combativity;
+                    }
+
                     this.combativity += change;
                     this.preservativity -= change / 2;
                     this.expensivity -= change / 2;
-                    if(this.preservativity < 0)
-                    {
-                        this.preservativity = 0;
-                        this.expensivity -= change - Math.abs(this.preservativity + change);
-                    }
-                    else if(this.expensivity < 0)
-                    {
-                        this.expensivity = 0;
-                        this.preservativity -= change - Math.abs(this.expensivity + change);
-                    }
                 }
 
                 break;
@@ -65,27 +54,16 @@ class MoChCivilisation
                     this.combativity = 0;
                     this.expensivity = 0;
                 }
-                else if(this.preservativity + change < 0)
-                {
-                    this.preservativity = 0;
-                    this.combativity += (change - Math.abs(this.preservativity + change)) / 2;
-                    this.expensivity += (change - Math.abs(this.preservativity + change)) / 2;
-                }
                 else
                 {
+                    if(this.preservativity + change < 0)
+                    {
+                        change = this.preservativity;
+                    }
+
                     this.preservativity += change;
                     this.combativity -= change / 2;
                     this.expensivity -= change / 2;
-                    if(this.combativity < 0)
-                    {
-                        this.combativity = 0;
-                        this.expensivity -= change - Math.abs(this.combativity + change);
-                    }
-                    else if(this.expensivity < 0)
-                    {
-                        this.expensivity = 0;
-                        this.combativity -= change - Math.abs(this.expensivity + change);
-                    }
                 }
 
                 break;
@@ -96,27 +74,16 @@ class MoChCivilisation
                     this.combativity = 0;
                     this.preservativity = 0;
                 }
-                else if(this.expensivity + change < 0)
-                {
-                    this.expensivity = 0;
-                    this.combativity += (change - Math.abs(this.expensivity + change)) / 2;
-                    this.preservativity += (change - Math.abs(this.expensivity + change)) / 2;
-                }
                 else
                 {
+                    if(this.expensivity + change < 0)
+                    {
+                        change = this.expensivity;
+                    }
+
                     this.expensivity += change;
                     this.combativity -= change / 2;
                     this.preservativity -= change / 2;
-                    if(this.combativity < 0)
-                    {
-                        this.combativity = 0;
-                        this.preservativity -= change - Math.abs(this.combativity + change);
-                    }
-                    else if(this.preservativity < 0)
-                    {
-                        this.preservativity = 0;
-                        this.combativity -= change - Math.abs(this.preservativity + change);
-                    }
                 }
 
                 break;
