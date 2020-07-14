@@ -1,23 +1,13 @@
 class Cell
 {
-    constructor(posX, posY)
+    constructor(posX, posY, growthModifier, capacity)
     {
         this.posX = posX;
         this.posY = posY;
         this.inhabitant = null;
         this.size = { width: null, height: null };
-    }
-
-    changeInhabitant(inhabitant)
-    {
-        if(inhabitant !== null)
-        {
-            this.inhabitant = new MoChColony({ x: this.posX, y: this.posY }, inhabitant.civilisation);
-        }
-        else
-        {
-            this.inhabitant = null;
-        }
+        this.growthModifier = growthModifier;
+        this.capacity = capacity;
     }
 
     resize(size)

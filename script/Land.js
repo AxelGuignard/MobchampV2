@@ -1,11 +1,10 @@
-class Battlefield
+class Land
 {
     constructor(cellSizeX, cellSizeY)
     {
         this.size = { width: null, height: null };
         this.cellSize = { width: cellSizeX, height: cellSizeY };
         this.cells = this.generate();
-
     }
 
     generate()
@@ -16,7 +15,7 @@ class Battlefield
             cells.push([]);
             for(let j = 0; j < this.cellSize.width; j++)
             {
-                cells[i].push(new Cell(i, j));
+                cells[i].push(new Cell(i, j, Math.round(Math.random() * 3 + 2), Math.round(Math.random() * 30 + 100)));
             }
         }
 

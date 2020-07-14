@@ -19,9 +19,9 @@
         </div>
 
         <script src="script/Cell.js"></script>
-        <script src="script/Battlefield.js"></script>
-        <script src="script/MoChCivilisation.js"></script>
-        <script src="script/MoChColony.js"></script>
+        <script src="script/Land.js"></script>
+        <script src="script/Species.js"></script>
+        <script src="script/Colony.js"></script>
         <script src="script/gameController.js"></script>
     </body>
 </html>
