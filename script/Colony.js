@@ -5,47 +5,66 @@ class Colony
         this.cell = cell;
         this.species = species;
         this.population = population;
-        this.thresholdColonize = thresholdColonize;
-        this.minPopColonize = minPopColonize;
-        this.maxPopColonize = maxPopColonize;
-        this.thresholdAttack = thresholdAttack;
-        this.minPopAttack = minPopAttack;
-        this.maxPopAttack = maxPopAttack;
-        this.thresholdTransfer = thresholdTransfer;
-        this.minPopTransfer = minPopTransfer;
-        this.maxPopTransfer = maxPopTransfer;
+        this.colonizationStats = {threshold: thresholdColonize, minPopSent: minPopColonize, maxPopSent: maxPopColonize};
+        this.attackStats = {threshold: thresholdAttack, minPopSent: minPopAttack, maxPopSent: maxPopAttack};
+        this.transferStats = {threshold: thresholdTransfer, minPopSent: minPopTransfer, maxPopSent: maxPopTransfer};
+        this.isAlive = true;
     }
 
-    colonize(cell)
+    addPopulation(quantity)
     {
-        let popSent = Math.round(Math.random() * (this.maxPopColonize - this.minPopColonize) + this.minPopColonize);
-        this.population -= popSent;
-        cell.inhabitant = this.createNewColony(cell, popSent);
+        this.population += quantity;
     }
 
-    attack(colony)
+    removePopulation(quantity)
     {
-        let popSent = Math.round(Math.random() * (this.maxPopAttack - this.minPopAttack) + this.minPopAttack);
-        this.population -= popSent;
-        colony.population -= Math.round(popSent * 1.5);
+        this.population -= quantity;
 
-        if (colony.population <= 0)
+        if (this.population <= 0)
+            this.isAlive = false;
+    }
+
+    colonize(cell, popSent = null)
+    {
+        if (cell.inhabitant === null)
         {
-            let popLeft = Math.round(Math.abs(colony.population) / 1.5);
-            colony.cell.inhabitant = this.createNewColony(colony.cell, popLeft);
-            colony.cell = null;
+            if (popSent === null)
+                popSent = Math.round(Math.random() * (this.colonizationStats.maxPopSent - this.colonizationStats.minPopSent) + this.colonizationStats.minPopSent);
+            this.removePopulation(popSent);
+            let newColony = this.createNewColony(cell, popSent);
+            cell.inhabitant = newColony;
+            return newColony;
         }
+        return null;
     }
 
-    transfer(colony)
+    attack(colony, popSent = null)
     {
-        let popSent = Math.round(Math.random() * (this.maxPopTransfer - this.minPopTransfer) + this.minPopTransfer);
-        this.population -= popSent;
-        colony.population += popSent;
-
-        if (colony.population >= colony.cell.capacity)
+        if (colony.isAlive)
         {
-            colony.sporeExplosion();
+            if (popSent === null)
+                popSent = Math.round(Math.random() * (this.attackStats.maxPopSent - this.attackStats.minPopSent) + this.attackStats.minPopSent);
+            this.removePopulation(popSent);
+            colony.removePopulation(popSent);
+
+            if (!colony.isAlive)
+            {
+                let popLeft = Math.abs(colony.population);
+                return this.createNewColony(colony.cell, popLeft);
+            }
+        }
+
+        return null;
+    }
+
+    transfer(colony, popSent = null)
+    {
+        if (colony.isAlive)
+        {
+            if (popSent === null)
+                popSent = Math.round(Math.random() * (this.transferStats.maxPopSent - this.transferStats.minPopSent) + this.transferStats.minPopSent);
+            this.removePopulation(popSent);
+            colony.addPopulation(popSent);
         }
     }
 
@@ -120,24 +139,6 @@ class Colony
         return surroundings;
     }
 
-    makeAMove()
-    {
-        let neighbors = this.scanSurroundings();
-
-        if(neighbors.empty.length > 0 && this.population >= this.thresholdColonize)
-        {
-            this.colonize(neighbors.empty[0]);
-        }
-        else if (neighbors.enemy.length > 0 && this.population >= this.thresholdAttack)
-        {
-            this.attack(neighbors.enemy[0]);
-        }
-        else if (neighbors.ally.length > 0 && this.population >= this.thresholdTransfer)
-        {
-            this.transfer(neighbors.ally[0]);
-        }
-    }
-
     createNewColony(cell, population)
     {
         let childThresholdColonize;
@@ -152,15 +153,15 @@ class Colony
 
         let rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childThresholdColonize = this.thresholdColonize - 2;
+            childThresholdColonize = this.colonizationStats.threshold - 2;
         else if (rnd <= 30 && rnd > 10)
-            childThresholdColonize = this.thresholdColonize - 1;
+            childThresholdColonize = this.colonizationStats.threshold - 1;
         else if (rnd <= 70 && rnd > 30)
-            childThresholdColonize = this.thresholdColonize;
+            childThresholdColonize = this.colonizationStats.threshold;
         else if (rnd <= 90 && rnd > 70)
-            childThresholdColonize = this.thresholdColonize + 1;
+            childThresholdColonize = this.colonizationStats.threshold + 1;
         else
-            childThresholdColonize = this.thresholdColonize + 2;
+            childThresholdColonize = this.colonizationStats.threshold + 2;
 
         if (childThresholdColonize < 2)
             childThresholdColonize = 2;
@@ -169,15 +170,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childMinPopColonize = this.minPopColonize - 2;
+            childMinPopColonize = this.colonizationStats.minPopSent - 2;
         else if (rnd <= 30 && rnd > 10)
-            childMinPopColonize = this.minPopColonize - 1;
+            childMinPopColonize = this.colonizationStats.minPopSent - 1;
         else if (rnd <= 70 && rnd > 30)
-            childMinPopColonize = this.minPopColonize;
+            childMinPopColonize = this.colonizationStats.minPopSent;
         else if (rnd <= 90 && rnd > 70)
-            childMinPopColonize = this.minPopColonize + 1;
+            childMinPopColonize = this.colonizationStats.minPopSent + 1;
         else
-            childMinPopColonize = this.minPopColonize + 2;
+            childMinPopColonize = this.colonizationStats.minPopSent + 2;
 
         if (childMinPopColonize < 1)
             childMinPopColonize = 1;
@@ -186,15 +187,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childMaxPopColonize = this.maxPopColonize - 2;
+            childMaxPopColonize = this.colonizationStats.maxPopSent - 2;
         else if (rnd <= 30 && rnd > 10)
-            childMaxPopColonize = this.maxPopColonize - 1;
+            childMaxPopColonize = this.colonizationStats.maxPopSent - 1;
         else if (rnd <= 70 && rnd > 30)
-            childMaxPopColonize = this.maxPopColonize;
+            childMaxPopColonize = this.colonizationStats.maxPopSent;
         else if (rnd <= 90 && rnd > 70)
-            childMaxPopColonize = this.maxPopColonize + 1;
+            childMaxPopColonize = this.colonizationStats.maxPopSent + 1;
         else
-            childMaxPopColonize = this.maxPopColonize + 2;
+            childMaxPopColonize = this.colonizationStats.maxPopSent + 2;
 
         if (childMaxPopColonize < childMinPopColonize)
             childMaxPopColonize = childMinPopColonize;
@@ -204,15 +205,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childThresholdAttack = this.thresholdAttack - 2;
+            childThresholdAttack = this.attackStats.threshold - 2;
         else if (rnd <= 30 && rnd > 10)
-            childThresholdAttack = this.thresholdAttack - 1;
+            childThresholdAttack = this.attackStats.threshold - 1;
         else if (rnd <= 70 && rnd > 30)
-            childThresholdAttack = this.thresholdAttack;
+            childThresholdAttack = this.attackStats.threshold;
         else if (rnd <= 90 && rnd > 70)
-            childThresholdAttack = this.thresholdAttack + 1;
+            childThresholdAttack = this.attackStats.threshold + 1;
         else
-            childThresholdAttack = this.thresholdAttack + 2;
+            childThresholdAttack = this.attackStats.threshold + 2;
 
         if (childThresholdAttack < 2)
             childThresholdAttack = 2;
@@ -221,15 +222,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childMinPopAttack = this.minPopAttack - 2;
+            childMinPopAttack = this.attackStats.minPopSent - 2;
         else if (rnd <= 30 && rnd > 10)
-            childMinPopAttack = this.minPopAttack - 1;
+            childMinPopAttack = this.attackStats.minPopSent - 1;
         else if (rnd <= 70 && rnd > 30)
-            childMinPopAttack = this.minPopAttack;
+            childMinPopAttack = this.attackStats.minPopSent;
         else if (rnd <= 90 && rnd > 70)
-            childMinPopAttack = this.minPopAttack + 1;
+            childMinPopAttack = this.attackStats.minPopSent + 1;
         else
-            childMinPopAttack = this.minPopAttack + 2;
+            childMinPopAttack = this.attackStats.minPopSent + 2;
 
         if (childMinPopAttack < 1)
             childMinPopAttack = 1;
@@ -238,15 +239,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childMaxPopAttack = this.maxPopAttack - 2;
+            childMaxPopAttack = this.attackStats.maxPopSent - 2;
         else if (rnd <= 30 && rnd > 10)
-            childMaxPopAttack = this.maxPopAttack - 1;
+            childMaxPopAttack = this.attackStats.maxPopSent - 1;
         else if (rnd <= 70 && rnd > 30)
-            childMaxPopAttack = this.maxPopAttack;
+            childMaxPopAttack = this.attackStats.maxPopSent;
         else if (rnd <= 90 && rnd > 70)
-            childMaxPopAttack = this.maxPopAttack + 1;
+            childMaxPopAttack = this.attackStats.maxPopSent + 1;
         else
-            childMaxPopAttack = this.maxPopAttack + 2;
+            childMaxPopAttack = this.attackStats.maxPopSent + 2;
 
         if (childMaxPopAttack < childMinPopAttack)
             childMaxPopAttack = childMinPopAttack;
@@ -255,15 +256,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childThresholdTransfer = this.thresholdTransfer - 2;
+            childThresholdTransfer = this.transferStats.threshold - 2;
         else if (rnd <= 30 && rnd > 10)
-            childThresholdTransfer = this.thresholdTransfer - 1;
+            childThresholdTransfer = this.transferStats.threshold - 1;
         else if (rnd <= 70 && rnd > 30)
-            childThresholdTransfer = this.thresholdTransfer;
+            childThresholdTransfer = this.transferStats.threshold;
         else if (rnd <= 90 && rnd > 70)
-            childThresholdTransfer = this.thresholdTransfer + 1;
+            childThresholdTransfer = this.transferStats.threshold + 1;
         else
-            childThresholdTransfer = this.thresholdTransfer + 2;
+            childThresholdTransfer = this.transferStats.threshold + 2;
 
         if (childThresholdTransfer < 2)
             childThresholdTransfer = 2;
@@ -272,15 +273,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childMinPopTransfer = this.minPopTransfer - 2;
+            childMinPopTransfer = this.transferStats.minPopSent - 2;
         else if (rnd <= 30 && rnd > 10)
-            childMinPopTransfer = this.minPopTransfer - 1;
+            childMinPopTransfer = this.transferStats.minPopSent - 1;
         else if (rnd <= 70 && rnd > 30)
-            childMinPopTransfer = this.minPopTransfer;
+            childMinPopTransfer = this.transferStats.minPopSent;
         else if (rnd <= 90 && rnd > 70)
-            childMinPopTransfer = this.minPopTransfer + 1;
+            childMinPopTransfer = this.transferStats.minPopSent + 1;
         else
-            childMinPopTransfer = this.minPopTransfer + 2;
+            childMinPopTransfer = this.transferStats.minPopSent + 2;
 
         if (childMinPopTransfer < 1)
             childMinPopTransfer = 1;
@@ -289,15 +290,15 @@ class Colony
 
         rnd = Math.random() * 100 + 1;
         if (rnd <= 10)
-            childMaxPopTransfer = this.maxPopTransfer - 2;
+            childMaxPopTransfer = this.transferStats.maxPopSent - 2;
         else if (rnd <= 30 && rnd > 10)
-            childMaxPopTransfer = this.maxPopTransfer - 1;
+            childMaxPopTransfer = this.transferStats.maxPopSent - 1;
         else if (rnd <= 70 && rnd > 30)
-            childMaxPopTransfer = this.maxPopTransfer;
+            childMaxPopTransfer = this.transferStats.maxPopSent;
         else if (rnd <= 90 && rnd > 70)
-            childMaxPopTransfer = this.maxPopTransfer + 1;
+            childMaxPopTransfer = this.transferStats.maxPopSent + 1;
         else
-            childMaxPopTransfer = this.maxPopTransfer + 2;
+            childMaxPopTransfer = this.transferStats.maxPopSent + 2;
 
         if (childMaxPopTransfer < childMinPopTransfer)
             childMaxPopTransfer = childMinPopTransfer;
@@ -309,12 +310,7 @@ class Colony
 
     grow()
     {
-        this.population += this.cell.growthModifier;
-        
-        if (this.population >= this.cell.capacity)
-        {
-            this.sporeExplosion();
-        }
+        this.addPopulation(this.cell.growthModifier);
     }
     
     sporeExplosion()
@@ -322,39 +318,33 @@ class Colony
         let neighbours = this.scanSurroundings();
         let neighboursLeft = neighbours.ally.length + neighbours.empty.length + neighbours.enemy.length;
         let popSent;
+        let newColonies = [];
 
         for (let empty of neighbours.empty)
         {
             popSent = Math.floor(this.population / neighboursLeft);
-            this.population -= popSent;
-            empty.inhabitant = this.createNewColony(empty, popSent);
+            let newColony = this.colonize(empty, popSent);
+            if (newColony !== null)
+                newColonies.push(newColony);
             neighboursLeft--;
         }
 
         for (let enemy of neighbours.enemy)
         {
             popSent = Math.floor(this.population / neighboursLeft);
-            this.population -= popSent;
-            enemy.inhabitant.population -= Math.round(popSent * 1.5);
-
-            if (enemy.inhabitant.population <= 0)
-            {
-                let popLeft = Math.round(Math.abs(enemy.inhabitant.population) / 1.5);
-                enemy.inhabitant.cell.inhabitant = this.createNewColony(enemy, popLeft);
-                enemy.inhabitant.cell = null;
-            }
+            let newColony = this.attack(enemy, popSent);
+            if (newColony !== null)
+                newColonies.push(newColony);
             neighboursLeft--;
         }
 
         for (let ally of neighbours.ally)
         {
             popSent = Math.floor(this.population / neighboursLeft);
-            this.population -= popSent;
-            ally.inhabitant.population += popSent;
+            this.transfer(ally, popSent);
             neighboursLeft--;
         }
 
-        this.cell.inhabitant = null;
-        this.cell = null;
+        return newColonies;
     }
 }

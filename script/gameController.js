@@ -10,18 +10,34 @@ let totalPop = 0;
 
 let time = 1020 - $("#speed").val();
 
-let debug = true;
+let debug = false;
+let updateTimeout = null;
+
+let actionStack = [];
 
 $(document).ready(function()
 {
     init();
-    if(debug)
+    $("body").on("keydown", function (e)
     {
-        $("body").on("click", function ()
+        if (e.key === " ")
         {
-            update(); // debug
-        });
-    }
+            if(debug)
+            {
+                update(); // debug
+            }
+            else
+            {
+                if (updateTimeout === null)
+                    setTimeout(update, time);
+                else
+                {
+                    clearTimeout(updateTimeout);
+                    updateTimeout = null;
+                }
+            }
+        }
+    });
 });
 
 function init()
@@ -123,7 +139,7 @@ function update()
     draw();
     if(!debug)
     {
-        let updateTimeout = setTimeout(update, time);
+        updateTimeout = setTimeout(update, time);
     }
 }
 
@@ -169,39 +185,94 @@ function draw()
 
 function updateGame()
 {
+    actionStack = {"Colonize": [], "Transfer": [], "Attack": [], "Idle": []};
+    let newColonies = [];
+
     for (let _species of species)
     {
         _species.population = 0;
     }
 
-    for(let i = 0; i < map.cellSize.height; i++)
+    for (let colony of colonies)
     {
-        for(let j = 0; j < map.cellSize.width; j++)
-        {
-            let colony = map.cells[j][i].inhabitant;
+        let neighbours = colony.scanSurroundings();
 
-            if(colony !== null)
+        if(neighbours.empty.length > 0 && colony.population >= colony.colonizationStats.threshold)
+        {
+            actionStack["Colonize"].push([colony, neighbours.empty[0]]);
+        }
+        else if (neighbours.enemy.length > 0 && colony.population >= colony.attackStats.threshold)
+        {
+            actionStack["Attack"].push([colony, neighbours.enemy[0]]);
+        }
+        else if (neighbours.ally.length > 0 && colony.population >= colony.transferStats.threshold)
+        {
+            for (let ally of neighbours.ally)
             {
-                colony.makeAMove();
-                if (colony.cell === null)
+                if (colony.population > ally.population)
                 {
-                    colonies.splice(colonies.indexOf(colony), 1);
+                    actionStack["Transfer"].push([colony, ally]);
+                    break;
                 }
-                else
-                {
-                    colony.grow();
-                    colony.species.population += colony.population;
-                }
+            }
+        }
+        else
+        {
+            actionStack["Idle"].push(colony);
+        }
+    }
+
+    console.log(actionStack);
+
+    for (let colonization of actionStack["Colonize"])
+    {
+        let newColony = colonization[0].colonize(colonization[1]);
+        if (newColony !== null)
+            newColonies.push(newColony);
+    }
+
+    for (let attack of actionStack["Attack"])
+    {
+        let newColony = attack[0].attack(attack[1]);
+        if (newColony !== null)
+            newColonies.push(newColony);
+    }
+
+    for (let transfer of actionStack["Transfer"])
+    {
+        transfer[0].transfer(transfer[1]);
+    }
+
+    for (let colony of colonies)
+    {
+        if (colony.isAlive)
+        {
+            colony.grow();
+            if (colony.population >= colony.cell.capacity)
+            {
+                let newColonies2 = colony.sporeExplosion();
+                newColonies.concat(newColonies2);
             }
         }
     }
 
     for (let colony of colonies)
     {
-        if (colony.cell === null)
+        if (!colony.isAlive)
         {
+            colony.cell.inhabitant = null;
             colonies.splice(colonies.indexOf(colony), 1);
         }
+    }
+
+    for (let colony of newColonies)
+    {
+        colonies.push(colony);
+    }
+
+    for (let colony of colonies)
+    {
+        colony.species.population += colony.population;
     }
 
     totalPop = 0
@@ -209,7 +280,7 @@ function updateGame()
     {
         totalPop += _species.population;
     }
-    // display species informations
+    // display species information
     for(let i = 0; i < species.length; i++)
     {
         $("#" + species[i].name.replace(" ", "_") + "_pop").text(species[i].population + "(" + (species[i].population / totalPop * 100).toPrecision(4) + "%)");
